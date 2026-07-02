@@ -1,0 +1,40 @@
+name: Sync weChat-autoCreate
+
+on:
+  push:
+    paths:
+      - ".github/workflows/sync-wechat-autocreate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ChingWha5
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Copy Gelen5/weChat-autoCreate
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          git clone --depth=1 https://github.com/Gelen5/weChat-autoCreate.git "$tmpdir/source"
+          rsync -a --delete             --exclude='.git/'             --exclude='.github/workflows/sync-wechat-autocreate.yml'             "$tmpdir/source/" "$GITHUB_WORKSPACE/"
+          rm -f "$GITHUB_WORKSPACE/.github/workflows/sync-wechat-autocreate.yml"
+
+      - name: Commit synced repository
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync Gelen5/weChat-autoCreate"
+            git push
+          fi
